@@ -255,8 +255,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
-      - name: Install dependencies (root + npx-cli)
+      - name: Install root dependencies (pnpm workspace)
         run: pnpm install --frozen-lockfile
+
+      - name: Install npx-cli dependencies (npm)
+        # The npx-cli package is not part of the pnpm workspace; it uses npm
+        # with its own package-lock.json, so it must be installed separately.
+        run: cd npx-cli && npm ci
 
       - name: Download all binary artifacts
         uses: actions/download-artifact@v4
