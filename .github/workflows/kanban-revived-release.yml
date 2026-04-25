@@ -1,0 +1,323 @@
+name: Kanban Revived release
+
+# Tag-driven release workflow for the russosalv/vibe-kanban fork.
+# Builds the three Rust binaries (server, mcp, review) for 6 platforms,
+# the React frontend, packs the npx CLI tarball, and uploads everything as
+# assets on a new GitHub Release. The npx CLI then downloads from that
+# release at runtime (see npx-cli/src/download.ts).
+#
+# Trigger: push a tag matching v*.
+#
+#   git tag v0.1.45
+#   git push origin v0.1.45
+#
+# After the workflow finishes, publish the .tgz attached to the release with:
+#   gh release download <tag> --pattern '*.tgz'
+#   npm publish kanban-revived-<version>.tgz --access public
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release (e.g. v0.1.45)"
+        required: true
+
+concurrency:
+  group: kanban-revived-release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: 22.22.1
+  PNPM_VERSION: 10.13.1
+  RUST_TOOLCHAIN: nightly-2025-12-04
+
+jobs:
+  resolve-tag:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Releasing $TAG (version $VERSION)"
+
+  build-frontend:
+    needs: resolve-tag
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.resolve-tag.outputs.tag }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        run: cd packages/local-web && pnpm run build
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: packages/local-web/dist/
+          retention-days: 1
+
+  build-backend:
+    needs: [resolve-tag, build-frontend]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-24.04
+            name: linux-x64
+            ext: ""
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-24.04-arm
+            name: linux-arm64
+            ext: ""
+          - target: x86_64-pc-windows-msvc
+            os: ubuntu-24.04
+            name: windows-x64
+            ext: ".exe"
+          - target: aarch64-pc-windows-msvc
+            os: ubuntu-24.04
+            name: windows-arm64
+            ext: ".exe"
+          - target: x86_64-apple-darwin
+            os: macos-14
+            name: macos-x64
+            ext: ""
+          - target: aarch64-apple-darwin
+            os: macos-14
+            name: macos-arm64
+            ext: ""
+    env:
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.resolve-tag.outputs.tag }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          targets: ${{ matrix.target }}
+
+      - name: Install Linux deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y clang libclang-dev lld llvm nasm cmake ninja-build
+          if [[ "${{ matrix.target }}" == *"windows"* ]]; then
+            DEBIAN_FRONTEND=noninteractive sudo apt-get install -y clang-19 clang-tools-19 llvm-19 lld-19
+            echo "/usr/lib/llvm-19/bin" >> $GITHUB_PATH
+          fi
+
+      - name: Install Zig (Linux musl targets)
+        if: runner.os == 'Linux' && !contains(matrix.target, 'windows')
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.15.2
+
+      - name: Install cargo-zigbuild (Linux musl targets)
+        if: runner.os == 'Linux' && !contains(matrix.target, 'windows')
+        run: cargo install cargo-zigbuild --version 0.20.1 --locked
+
+      - name: Install cargo-xwin (Windows targets)
+        if: runner.os == 'Linux' && contains(matrix.target, 'windows')
+        run: cargo install cargo-xwin --version 0.20.2 --locked
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/cache
+            ~/.cargo/registry/index
+            ~/.cargo/git/db
+          key: cargo-${{ runner.os }}-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-${{ runner.os }}-${{ matrix.target }}-
+
+      - name: Cache target
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: target-${{ runner.os }}-${{ matrix.target }}-${{ github.sha }}
+          restore-keys: |
+            target-${{ runner.os }}-${{ matrix.target }}-
+
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: packages/local-web/dist/
+
+      - name: Build (Linux musl)
+        if: runner.os == 'Linux' && !contains(matrix.target, 'windows')
+        run: |
+          cargo zigbuild --release --target ${{ matrix.target }} \
+            -p server -p mcp -p review \
+            --bin server --bin vibe-kanban-mcp --bin review
+
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          if [[ "${{ matrix.target }}" == "x86_64-apple-darwin" ]]; then
+            export MACOSX_DEPLOYMENT_TARGET=10.12
+          else
+            export MACOSX_DEPLOYMENT_TARGET=11.0
+          fi
+          cargo build --release --target ${{ matrix.target }} \
+            -p server -p mcp -p review \
+            --bin server --bin vibe-kanban-mcp --bin review
+
+      - name: Build (Windows via xwin)
+        if: runner.os == 'Linux' && contains(matrix.target, 'windows')
+        env:
+          CARGO_PROFILE_RELEASE_DEBUG: 0
+        run: |
+          if [[ "${{ matrix.target }}" == "aarch64-pc-windows-msvc" ]]; then
+            chmod +x scripts/ring-cc-wrapper.sh scripts/clang || true
+            export PATH="${{ github.workspace }}/scripts:$PATH"
+            export RING_CC=/usr/lib/llvm-19/bin/clang
+            export DEFAULT_CC=clang-cl
+            export CC_aarch64_pc_windows_msvc="${{ github.workspace }}/scripts/ring-cc-wrapper.sh"
+          fi
+          cargo xwin build --cross-compiler clang-cl --release --target ${{ matrix.target }} \
+            -p server -p mcp -p review \
+            --bin server --bin vibe-kanban-mcp --bin review
+
+      - name: Stage and zip binaries
+        shell: bash
+        run: |
+          mkdir -p staging "release-assets"
+          cp "target/${{ matrix.target }}/release/server${{ matrix.ext }}" "staging/vibe-kanban${{ matrix.ext }}"
+          cp "target/${{ matrix.target }}/release/vibe-kanban-mcp${{ matrix.ext }}" "staging/vibe-kanban-mcp${{ matrix.ext }}"
+          cp "target/${{ matrix.target }}/release/review${{ matrix.ext }}" "staging/vibe-kanban-review${{ matrix.ext }}"
+          ( cd staging && zip "../release-assets/${{ matrix.name }}-vibe-kanban.zip" "vibe-kanban${{ matrix.ext }}" )
+          ( cd staging && zip "../release-assets/${{ matrix.name }}-vibe-kanban-mcp.zip" "vibe-kanban-mcp${{ matrix.ext }}" )
+          ( cd staging && zip "../release-assets/${{ matrix.name }}-vibe-kanban-review.zip" "vibe-kanban-review${{ matrix.ext }}" )
+          ls -la release-assets/
+
+      - name: Upload binary artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.name }}
+          path: release-assets/
+          retention-days: 1
+
+  package-and-release:
+    needs: [resolve-tag, build-backend]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.resolve-tag.outputs.tag }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies (root + npx-cli)
+        run: pnpm install --frozen-lockfile
+
+      - name: Download all binary artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: binaries-*
+          path: release-assets/
+          merge-multiple: true
+
+      - name: List release assets
+        run: ls -la release-assets/
+
+      - name: Generate manifest.json
+        run: |
+          TAG="${{ needs.resolve-tag.outputs.tag }}"
+          node -e "
+            const fs = require('fs');
+            const crypto = require('crypto');
+            const platforms = ['linux-x64', 'linux-arm64', 'windows-x64', 'windows-arm64', 'macos-x64', 'macos-arm64'];
+            const binaries = ['vibe-kanban', 'vibe-kanban-mcp', 'vibe-kanban-review'];
+            const manifest = { version: process.env.TAG, platforms: {} };
+            for (const platform of platforms) {
+              manifest.platforms[platform] = {};
+              for (const binary of binaries) {
+                const zipPath = 'release-assets/' + platform + '-' + binary + '.zip';
+                if (fs.existsSync(zipPath)) {
+                  const data = fs.readFileSync(zipPath);
+                  manifest.platforms[platform][binary] = {
+                    sha256: crypto.createHash('sha256').update(data).digest('hex'),
+                    size: data.length,
+                  };
+                }
+              }
+            }
+            fs.writeFileSync('release-assets/manifest.json', JSON.stringify(manifest, null, 2));
+            console.log(JSON.stringify(manifest, null, 2));
+          "
+        env:
+          TAG: ${{ needs.resolve-tag.outputs.tag }}
+
+      - name: Build npx-cli bundle
+        run: |
+          cd npx-cli
+          pnpm run build
+          # Substitute the BINARY_TAG placeholder so the published wrapper
+          # downloads from this exact release tag.
+          sed -i "s|__BINARY_TAG__|${{ needs.resolve-tag.outputs.tag }}|g" bin/cli.js
+
+      - name: npm pack the wrapper
+        run: |
+          cd npx-cli
+          npm pack
+          mv kanban-revived-*.tgz ../release-assets/
+          ls -la ../release-assets/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.resolve-tag.outputs.tag }}
+          name: Kanban Revived ${{ needs.resolve-tag.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            release-assets/*.zip
+            release-assets/manifest.json
+            release-assets/*.tgz

@@ -137,7 +137,7 @@ async function extractAndRun(
       fs.unlinkSync(binPath);
     }
   } catch (err: unknown) {
-    if (process.env.VIBE_KANBAN_DEBUG) {
+    if (process.env.KANBAN_REVIVED_DEBUG || process.env.VIBE_KANBAN_DEBUG) {
       const msg = err instanceof Error ? err.message : String(err);
       console.warn(`Warning: Could not delete existing binary: ${msg}`);
     }
@@ -196,8 +196,8 @@ async function extractAndRun(
 }
 
 function checkForUpdates(): void {
-  const hasValidR2Url = !R2_BASE_URL.startsWith("__");
-  if (LOCAL_DEV_MODE || !hasValidR2Url) {
+  const hasValidBaseUrl = !R2_BASE_URL.startsWith("__");
+  if (LOCAL_DEV_MODE || !hasValidBaseUrl) {
     return;
   }
 
@@ -206,7 +206,7 @@ function checkForUpdates(): void {
       if (latest && latest !== CLI_VERSION) {
         setTimeout(() => {
           console.log(`\nUpdate available: ${CLI_VERSION} -> ${latest}`);
-          console.log(`Run: npx vibe-kanban@latest`);
+          console.log(`Run: npx kanban-revived@latest`);
         }, 2000);
       }
     })
@@ -252,7 +252,7 @@ async function runMain(desktopMode: boolean): Promise<void> {
   if (desktopMode && tauriPlatform) {
     try {
       console.log(
-        `Starting vibe-kanban desktop v${CLI_VERSION}${modeLabel}...`,
+        `Starting kanban-revived desktop v${CLI_VERSION}${modeLabel}...`,
       );
       const bundleInfo = await ensureDesktopBundle(tauriPlatform, showProgress);
       console.error(""); // newline after progress
@@ -272,7 +272,7 @@ async function runMain(desktopMode: boolean): Promise<void> {
   }
 
   // Browser mode (default — headless server + opens browser)
-  console.log(`Starting vibe-kanban v${CLI_VERSION}${modeLabel}...`);
+  console.log(`Starting kanban-revived v${CLI_VERSION}${modeLabel}...`);
   await extractAndRun("vibe-kanban", (bin) => {
     execSync(`"${bin}"`, { stdio: "inherit" });
   });
@@ -298,7 +298,7 @@ function runOrExit(task: Promise<void>): void {
   void task.catch((err: unknown) => {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("Fatal error:", msg);
-    if (process.env.VIBE_KANBAN_DEBUG && err instanceof Error) {
+    if ((process.env.KANBAN_REVIVED_DEBUG || process.env.VIBE_KANBAN_DEBUG) && err instanceof Error) {
       console.error(err.stack);
     }
     process.exit(1);
@@ -307,10 +307,10 @@ function runOrExit(task: Promise<void>): void {
 
 async function main(): Promise<void> {
   fs.mkdirSync(versionCacheDir, { recursive: true });
-  const cli = cac("vibe-kanban");
+  const cli = cac("kanban-revived");
 
   cli
-    .command("[...args]", "Launch the local vibe-kanban app")
+    .command("[...args]", "Launch the local kanban-revived app")
     .option("--desktop", "Launch the desktop app instead of browser mode")
     .allowUnknownOptions()
     .action((_args: string[], options: RootOptions) => {
