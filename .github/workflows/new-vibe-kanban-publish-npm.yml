@@ -81,7 +81,9 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          PKG=$(ls npm-pkg/*.tgz | head -n1)
+          # Use an absolute path so npm does not mis-parse the relative path
+          # as an "<owner>/<repo>" GitHub shortcut.
+          PKG="$(realpath "$(ls npm-pkg/*.tgz | head -n1)")"
           echo "Publishing $PKG to npm..."
           npm publish "$PKG" --access public --provenance
           echo "Done."
