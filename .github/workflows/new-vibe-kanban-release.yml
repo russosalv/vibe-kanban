@@ -1,6 +1,6 @@
 name: new-vibe-kanban release
 
-# Tag-driven release workflow for the russosalv/vibe-kanban fork.
+# Tag-driven release workflow for the russosalv/new-vibe-kanban fork.
 # Builds the three Rust binaries (server, mcp, review) for 6 platforms,
 # the React frontend, packs the npx CLI tarball, and uploads everything as
 # assets on a new GitHub Release. The npx CLI then downloads from that

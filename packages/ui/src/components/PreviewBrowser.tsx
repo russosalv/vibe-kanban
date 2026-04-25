@@ -612,7 +612,7 @@ export function PreviewBrowser({
                     />
                   </div>
                   <a
-                    href="https://github.com/russosalv/vibe-kanban#readme"
+                    href="https://github.com/russosalv/new-vibe-kanban#readme"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-brand hover:text-brand-hover underline"

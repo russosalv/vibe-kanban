@@ -34,7 +34,7 @@ import { RemoteCloudHostsSettingsCardContent } from './RemoteCloudHostsSettingsC
 
 const RELAY_PAIRED_CLIENTS_QUERY_KEY = ['relay', 'paired-clients'] as const;
 const RELAY_REMOTE_CONTROL_DOCS_URL =
-  'https://github.com/russosalv/vibe-kanban#readme';
+  'https://github.com/russosalv/new-vibe-kanban#readme';
 
 interface RelaySettingsSectionInitialState {
   hostId?: string;

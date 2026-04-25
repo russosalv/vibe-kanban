@@ -43,4 +43,4 @@ The legacy `VIBE_KANBAN_LOCAL` and `VIBE_KANBAN_DEBUG` variables are still honor
 
 ## Source
 
-Source repository: https://github.com/russosalv/vibe-kanban
+Source repository: https://github.com/russosalv/new-vibe-kanban

@@ -9,7 +9,7 @@
 <p align="center">Get 10X more out of Claude Code, Gemini CLI, Codex, Amp and other coding agents...</p>
 <p align="center">
   <a href="https://www.npmjs.com/package/new-vibe-kanban"><img alt="npm" src="https://img.shields.io/npm/v/new-vibe-kanban?style=flat-square" /></a>
-  <a href="https://github.com/russosalv/vibe-kanban/blob/main/.github/workflows/new-vibe-kanban-release.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/russosalv/vibe-kanban/new-vibe-kanban-release.yml" /></a>
+  <a href="https://github.com/russosalv/new-vibe-kanban/blob/main/.github/workflows/new-vibe-kanban-release.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/russosalv/new-vibe-kanban/new-vibe-kanban-release.yml" /></a>
 </p>
 
 <h2 align="center">
@@ -56,7 +56,7 @@ npx new-vibe-kanban
 
 - **Project / kanban routes restored** — upstream replaced these with an export-only page; this fork reverts that change.
 - **Cloud-only features removed or hidden** — Bloop's hosted backend (`api.vibekanban.com`, `cloud.vibekanban.com`, relay tunnels) is no longer reachable, so login/org/remote-project flows that depended on it have been disabled in this fork. Local mode is what you get.
-- **Binaries hosted on GitHub Releases** of [`russosalv/vibe-kanban`](https://github.com/russosalv/vibe-kanban/releases) instead of Bloop's R2 bucket.
+- **Binaries hosted on GitHub Releases** of [`russosalv/new-vibe-kanban`](https://github.com/russosalv/new-vibe-kanban/releases) instead of Bloop's R2 bucket.
 
 ## Documentation
 
@@ -64,7 +64,7 @@ Documentation is currently being rebuilt for this fork. In the meantime, see the
 
 ## Support
 
-Bug reports and feature requests: open an issue on [this repository](https://github.com/russosalv/vibe-kanban/issues).
+Bug reports and feature requests: open an issue on [this repository](https://github.com/russosalv/new-vibe-kanban/issues).
 
 ## Development
 

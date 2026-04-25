@@ -19,7 +19,7 @@
   "author": "Alessandro Russo",
   "repository": {
     "type": "git",
-    "url": "https://github.com/russosalv/vibe-kanban"
+    "url": "https://github.com/russosalv/new-vibe-kanban"
   },
   "engines": {
     "node": ">=20.19.0"

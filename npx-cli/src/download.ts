@@ -6,7 +6,7 @@ import os from 'os';
 
 // GitHub repository hosting the binary releases for this fork.
 export const GITHUB_OWNER = 'russosalv';
-export const GITHUB_REPO = 'vibe-kanban';
+export const GITHUB_REPO = 'new-vibe-kanban';
 export const GITHUB_RELEASES_BASE = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download`;
 export const GITHUB_LATEST_RELEASE_API = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
 

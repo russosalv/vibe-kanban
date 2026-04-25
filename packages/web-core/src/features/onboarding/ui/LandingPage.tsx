@@ -115,12 +115,12 @@ const SOCIAL_LINKS = [
   },
   {
     label: 'GitHub',
-    href: 'https://github.com/russosalv/vibe-kanban',
+    href: 'https://github.com/russosalv/new-vibe-kanban',
     icon: GithubLogoIcon,
   },
   {
     label: 'Docs',
-    href: 'https://github.com/russosalv/vibe-kanban#readme',
+    href: 'https://github.com/russosalv/new-vibe-kanban#readme',
     icon: BookOpenIcon,
   },
 ];
@@ -362,7 +362,7 @@ export function LandingPage() {
                 <code>--yolo</code> by default. Always review what agents are
                 doing.{' '}
                 <a
-                  href="https://github.com/russosalv/vibe-kanban#readme"
+                  href="https://github.com/russosalv/new-vibe-kanban#readme"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-brand hover:underline"
@@ -552,7 +552,7 @@ export function LandingPage() {
           <p className="text-xs text-low">
             new-vibe-kanban is a community fork released under its{' '}
             <a
-              href="https://github.com/russosalv/vibe-kanban#readme"
+              href="https://github.com/russosalv/new-vibe-kanban#readme"
               target="_blank"
               rel="noopener noreferrer"
               className="text-brand hover:underline"
