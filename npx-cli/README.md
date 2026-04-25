@@ -1,13 +1,13 @@
-# Kanban Revived
+# new-vibe-kanban
 
-> Fork of [vibe-kanban](https://github.com/BloopAI/vibe-kanban) with full project functionality preserved (the upstream project sunset its kanban routes to an export-only page; this fork reverts that change).
+> Community fork of [vibe-kanban](https://github.com/BloopAI/vibe-kanban) with full project functionality preserved (the upstream project sunset its kanban routes to an export-only page; this fork reverts that change).
 
 ## Quick Start
 
-Run kanban-revived without installation:
+Run new-vibe-kanban without installation:
 
 ```bash
-npx kanban-revived
+npx new-vibe-kanban
 ```
 
 This launches the application locally and opens it in your browser.
@@ -15,15 +15,15 @@ This launches the application locally and opens it in your browser.
 Helpful entrypoints:
 
 ```bash
-npx kanban-revived --help
-npx kanban-revived --version
-npx kanban-revived review --help
-npx kanban-revived mcp --help
+npx new-vibe-kanban --help
+npx new-vibe-kanban --version
+npx new-vibe-kanban review --help
+npx new-vibe-kanban mcp --help
 ```
 
 ## How it works
 
-The npm package is a thin CLI wrapper. On first run it downloads the appropriate platform-specific binaries (built from this fork) from the project's GitHub Releases page and caches them under `~/.kanban-revived/`.
+The npm package is a thin CLI wrapper. On first run it downloads the appropriate platform-specific binaries (built from this fork) from the project's GitHub Releases page and caches them under `~/.new-vibe-kanban/`.
 
 ## Supported Platforms
 
@@ -36,8 +36,8 @@ The npm package is a thin CLI wrapper. On first run it downloads the appropriate
 
 ## Environment
 
-- `KANBAN_REVIVED_LOCAL=1` — use locally built binaries from `npx-cli/dist/` (after running `./local-build.sh`)
-- `KANBAN_REVIVED_DEBUG=1` — verbose error output
+- `NEW_VIBE_KANBAN_LOCAL=1` — use locally built binaries from `npx-cli/dist/` (after running `./local-build.sh`)
+- `NEW_VIBE_KANBAN_DEBUG=1` — verbose error output
 
 The legacy `VIBE_KANBAN_LOCAL` and `VIBE_KANBAN_DEBUG` variables are still honored.
 

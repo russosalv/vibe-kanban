@@ -115,12 +115,12 @@ const SOCIAL_LINKS = [
   },
   {
     label: 'GitHub',
-    href: 'https://github.com/BloopAI/vibe-kanban',
+    href: 'https://github.com/russosalv/vibe-kanban',
     icon: GithubLogoIcon,
   },
   {
     label: 'Docs',
-    href: 'https://www.vibekanban.com/docs',
+    href: 'https://github.com/russosalv/vibe-kanban#readme',
     icon: BookOpenIcon,
   },
 ];
@@ -357,12 +357,12 @@ export function LandingPage() {
                 weight="fill"
               />
               <p className="text-sm text-normal">
-                Vibe Kanban runs AI coding agents with{' '}
+                new-vibe-kanban runs AI coding agents with{' '}
                 <code>--dangerously-skip-permissions</code> /{' '}
                 <code>--yolo</code> by default. Always review what agents are
                 doing.{' '}
                 <a
-                  href="https://www.vibekanban.com/docs/getting-started#safety-notice"
+                  href="https://github.com/russosalv/vibe-kanban#readme"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-brand hover:underline"
@@ -550,23 +550,14 @@ export function LandingPage() {
         {/* Footer */}
         <div className="shrink-0 border-t border-border p-double pt-base flex items-center justify-between gap-base">
           <p className="text-xs text-low">
-            By continuing you agree to the{' '}
+            new-vibe-kanban is a community fork released under its{' '}
             <a
-              href="https://www.vibekanban.com/terms"
+              href="https://github.com/russosalv/vibe-kanban#readme"
               target="_blank"
               rel="noopener noreferrer"
               className="text-brand hover:underline"
             >
-              terms and conditions
-            </a>{' '}
-            and{' '}
-            <a
-              href="https://www.vibekanban.com/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand hover:underline"
-            >
-              privacy policy
+              repository terms
             </a>
             .
           </p>

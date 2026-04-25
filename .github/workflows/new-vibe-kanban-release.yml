@@ -1,4 +1,4 @@
-name: Kanban Revived release
+name: new-vibe-kanban release
 
 # Tag-driven release workflow for the russosalv/vibe-kanban fork.
 # Builds the three Rust binaries (server, mcp, review) for 6 platforms,
@@ -11,9 +11,9 @@ name: Kanban Revived release
 #   git tag v0.1.45
 #   git push origin v0.1.45
 #
-# After the workflow finishes, publish the .tgz attached to the release with:
-#   gh release download <tag> --pattern '*.tgz'
-#   npm publish kanban-revived-<version>.tgz --access public
+# Once the release is published, the companion workflow
+# new-vibe-kanban-publish-npm.yml picks up the .tgz asset and runs
+# npm publish automatically (requires NPM_TOKEN repo secret).
 
 on:
   push:
@@ -26,7 +26,7 @@ on:
         required: true
 
 concurrency:
-  group: kanban-revived-release-${{ github.ref_name }}
+  group: new-vibe-kanban-release-${{ github.ref_name }}
   cancel-in-progress: false
 
 permissions:
@@ -308,14 +308,14 @@ jobs:
         run: |
           cd npx-cli
           npm pack
-          mv kanban-revived-*.tgz ../release-assets/
+          mv new-vibe-kanban-*.tgz ../release-assets/
           ls -la ../release-assets/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.resolve-tag.outputs.tag }}
-          name: Kanban Revived ${{ needs.resolve-tag.outputs.tag }}
+          name: new-vibe-kanban ${{ needs.resolve-tag.outputs.tag }}
           generate_release_notes: true
           files: |
             release-assets/*.zip

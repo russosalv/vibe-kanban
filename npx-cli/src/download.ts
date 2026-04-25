@@ -18,14 +18,14 @@ export const BINARY_TAG = '__BINARY_TAG__'; // e.g., v0.1.44
 // Releases base so the wrapper is functional even before pack-time substitution.
 export const R2_BASE_URL = GITHUB_RELEASES_BASE;
 
-export const CACHE_DIR = path.join(os.homedir(), '.kanban-revived', 'bin');
+export const CACHE_DIR = path.join(os.homedir(), '.new-vibe-kanban', 'bin');
 
 // Local development mode: use binaries from npx-cli/dist/ instead of remote.
 // Only activate if dist/ exists (i.e., running from source after local-build.sh).
 export const LOCAL_DIST_DIR = path.join(__dirname, '..', 'dist');
 export const LOCAL_DEV_MODE =
   fs.existsSync(LOCAL_DIST_DIR) ||
-  process.env.KANBAN_REVIVED_LOCAL === '1' ||
+  process.env.NEW_VIBE_KANBAN_LOCAL === '1' ||
   process.env.VIBE_KANBAN_LOCAL === '1';
 
 export interface BinaryInfo {
@@ -63,8 +63,8 @@ function fetchJson<T>(url: string): Promise<T> {
         url,
         {
           headers: {
-            // GitHub API requires a User-Agent; harmless on R2/static hosts.
-            'User-Agent': 'kanban-revived-cli',
+            // GitHub API requires a User-Agent; harmless on static hosts.
+            'User-Agent': 'new-vibe-kanban-cli',
             Accept: 'application/json',
           },
         },
@@ -226,7 +226,7 @@ export async function ensureBinary(
 
 export const DESKTOP_CACHE_DIR = path.join(
   os.homedir(),
-  '.kanban-revived',
+  '.new-vibe-kanban',
   'desktop'
 );
 

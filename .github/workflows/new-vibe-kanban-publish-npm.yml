@@ -1,0 +1,87 @@
+name: new-vibe-kanban publish to npm
+
+# Triggers when a GitHub Release is published. Downloads the .tgz asset that
+# new-vibe-kanban-release.yml uploaded and runs `npm publish` against the
+# public npm registry as `new-vibe-kanban`.
+#
+# Setup required (one-time):
+# 1. Create an npm account and reserve the `new-vibe-kanban` package name.
+# 2. Generate an automation token at https://www.npmjs.com/settings/<user>/tokens
+#    (type: Automation; not classic Read/Publish).
+# 3. Add the token to repo secrets as NPM_TOKEN
+#    (Settings → Secrets and variables → Actions → New repository secret).
+#
+# Optional: switch to npm "Trusted Publishing" (OIDC, no token) by configuring
+# a trusted publisher on npmjs.com pointing at this workflow file. If you do
+# that, drop the NODE_AUTH_TOKEN env block below and add `--provenance` only
+# (already in the publish command).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag to publish (e.g. v0.1.45)"
+        required: true
+
+permissions:
+  contents: read
+  id-token: write # for npm provenance / OIDC trusted publishing
+
+concurrency:
+  group: new-vibe-kanban-publish-npm
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          registry-url: https://registry.npmjs.org
+
+      - name: Resolve release tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag_name }}"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Publishing release $TAG"
+
+      - name: Download .tgz from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p npm-pkg
+          gh release download "${{ steps.tag.outputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --pattern '*.tgz' \
+            --dir npm-pkg
+          ls -la npm-pkg/
+
+      - name: Verify package metadata
+        run: |
+          PKG=$(ls npm-pkg/*.tgz | head -n1)
+          tar -xOf "$PKG" package/package.json | head -20
+          NAME=$(tar -xOf "$PKG" package/package.json | node -e "let s='';process.stdin.on('data',c=>s+=c);process.stdin.on('end',()=>console.log(JSON.parse(s).name))")
+          if [ "$NAME" != "new-vibe-kanban" ]; then
+            echo "::error::Package name in tarball is '$NAME', expected 'new-vibe-kanban'."
+            exit 1
+          fi
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          PKG=$(ls npm-pkg/*.tgz | head -n1)
+          echo "Publishing $PKG to npm..."
+          npm publish "$PKG" --access public --provenance
+          echo "Done."
